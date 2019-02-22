@@ -1,4 +1,4 @@
-# postgrescomp-tap-hubspot
+# tap-hubspot
 
 This is a [Singer](https://singer.io) tap that produces JSON-formatted data following the [Singer spec](https://github.com/singer-io/getting-started/blob/master/SPEC.md).
 
@@ -18,7 +18,7 @@ This tap:
   - [Owners](http://developers.hubspot.com/docs/methods/owners/get_owners)
   - [Subscription Changes](http://developers.hubspot.com/docs/methods/email/get_subscriptions_timeline)
   - [Workflows](http://developers.hubspot.com/docs/methods/workflows/v3/get_workflows)
-- Outputs the schema for each resource
+- Outputs a Postgres compatible schema for each resource
 - Incrementally pulls data based on the input state
 
 ## Configuration
