@@ -1,17 +1,17 @@
 import unittest
 import singer.bookmarks
 import singer.messages
-import tap_hubspot
+import postgrescomp_tap_hubspot
 import pprint
 import os
-from tap_hubspot.tests import utils
+from postgrescomp_tap_hubspot.tests import utils
 
 LOGGER = singer.get_logger()
 
 class Bookmarks(unittest.TestCase):
     def setUp(self):
         utils.verify_environment_vars()
-        utils.seed_tap_hubspot_config()
+        utils.seed_postgrescomp_tap_hubspot_config()
         singer.write_bookmark = utils.our_write_bookmark
         singer.write_state    = utils.our_write_state
         singer.write_record   = utils.our_write_record
@@ -22,9 +22,9 @@ class Bookmarks(unittest.TestCase):
         STATE = utils.get_clear_state()
         catalog = {'stream_alias' : 'hubspot_contacts'}
 
-        tap_hubspot.default_contact_params['count'] = 1
+        postgrescomp_tap_hubspot.default_contact_params['count'] = 1
 
-        STATE = tap_hubspot.sync_contacts(STATE, catalog)
+        STATE = postgrescomp_tap_hubspot.sync_contacts(STATE, catalog)
         #offset has been cleared
         self.assertEqual(utils.caught_state['bookmarks']['contacts']['offset'], {})
 
@@ -38,7 +38,7 @@ class Bookmarks(unittest.TestCase):
         self.assertEqual(utils.caught_pks, {'contacts': ['vid']})
 
         utils.caught_records = []
-        STATE = tap_hubspot.sync_contacts(STATE, catalog)
+        STATE = postgrescomp_tap_hubspot.sync_contacts(STATE, catalog)
 
         #no new records thanks to bookmark
         self.assertEqual(len(utils.caught_records),0)
@@ -47,7 +47,7 @@ class Bookmarks(unittest.TestCase):
         STATE = utils.get_clear_state()
 
         catalog = {'stream_alias' : 'hubspot_companies'}
-        STATE = tap_hubspot.sync_companies(STATE, catalog)
+        STATE = postgrescomp_tap_hubspot.sync_companies(STATE, catalog)
 
         #offset has been cleared
         self.assertEqual(utils.caught_state['bookmarks']['companies']['offset'], {})
@@ -62,7 +62,7 @@ class Bookmarks(unittest.TestCase):
         self.assertEqual(utils.caught_pks,  {'companies': ['companyId'], 'hubspot_contacts_by_company': ['company-id', 'contact-id']})
 
         utils.caught_records = []
-        STATE = tap_hubspot.sync_companies(STATE, catalog)
+        STATE = postgrescomp_tap_hubspot.sync_companies(STATE, catalog)
 
         #no new records thanks to bookmark
         self.assertEqual(len(utils.caught_records),0)

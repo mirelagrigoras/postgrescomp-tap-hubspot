@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from io import StringIO
 from singer import utils
-from tap_hubspot import *
+from postgrescomp_tap_hubspot import *
 import time
 import datetime
 import json

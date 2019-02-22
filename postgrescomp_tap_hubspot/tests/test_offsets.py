@@ -1,9 +1,9 @@
 import unittest
 import logging
 import singer
-import tap_hubspot
+import postgrescomp_tap_hubspot
 import singer.bookmarks
-from tap_hubspot.tests import utils
+from postgrescomp_tap_hubspot.tests import utils
 
 LOGGER = singer.get_logger()
 
@@ -15,7 +15,7 @@ def set_offset_with_exception(state, tap_stream_id, offset_key, offset_value):
 class Offsets(unittest.TestCase):
     def setUp(self):
         utils.verify_environment_vars()
-        utils.seed_tap_hubspot_config()
+        utils.seed_postgrescomp_tap_hubspot_config()
         singer.write_bookmark = utils.our_write_bookmark
         singer.write_state    = utils.our_write_state
         singer.write_record   = utils.our_write_record
@@ -29,10 +29,10 @@ class Offsets(unittest.TestCase):
         catalog = {'stream_alias' : 'hubspot_companies'}
 
         #change count = 1
-        tap_hubspot.default_company_params['limit'] = 1
+        postgrescomp_tap_hubspot.default_company_params['limit'] = 1
 
         try:
-            STATE = tap_hubspot.sync_companies(STATE, catalog)
+            STATE = postgrescomp_tap_hubspot.sync_companies(STATE, catalog)
         except Exception as ex:
             simulated_exception = ex
             # logging.exception('strange')
@@ -54,7 +54,7 @@ class Offsets(unittest.TestCase):
         self.assertEqual(utils.caught_state['bookmarks']['companies']['hs_lastmodifieddate'], None)
 
         #change count back to 250
-        tap_hubspot.default_company_params['limit'] = 250
+        postgrescomp_tap_hubspot.default_company_params['limit'] = 250
 
         #call do_sync and verify:
         #    1)sync_companies is called first

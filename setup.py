@@ -19,9 +19,9 @@ setup(name='postgrescomp-tap-hubspot',
       ],
       entry_points='''
           [console_scripts]
-          postgrescomp-tap-hubspot=postgrescomp-tap-hubspot:main
+          postgrescomp_tap_hubspot=postgrescomp_tap_hubspot.postgrescomp_tap_hubspot:main
       ''',
-      packages=['postgrescomp-tap-hubspot'],
+      packages=['postgrescomp_tap_hubspot'],
       package_data = {
           'postgrescomp_tap_hubspot/schemas': [
               "campaigns.json",

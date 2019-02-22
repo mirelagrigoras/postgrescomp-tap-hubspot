@@ -1,7 +1,7 @@
 import singer
 import singer.bookmarks
 import os
-import tap_hubspot
+import postgrescomp_tap_hubspot
 
 LOGGER = singer.get_logger()
 
@@ -22,7 +22,7 @@ def verify_environment_vars():
         raise Exception("set TAP_HUBSPOT_REDIRECT_URI, TAP_HUBSPOT_CLIENT_ID, TAP_HUBSPOT_CLIENT_SECRET, TAP_HUBSPOT_REFRESH_TOKEN")
 
 def seed_tap_hubspot_config():
-    tap_hubspot.CONFIG = {
+    postgrescomp_tap_hubspot.CONFIG = {
         "access_token": None,
         "token_expires": None,
 
