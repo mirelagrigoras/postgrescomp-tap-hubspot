@@ -23,6 +23,7 @@ from singer import (transform,
 LOGGER = singer.get_logger()
 SESSION = requests.Session()
 
+DEFAULT_MAX_PAGES_RETRIEVED = 25
 class InvalidAuthException(Exception):
     pass
 
@@ -58,25 +59,26 @@ CONFIG = {
     "client_secret": None,
     "refresh_token": None,
     "start_date": None,
-    "hapikey": None
+    "hapikey": None,
+    "max_pages_retrieved": None
 }
 
 
 ENDPOINTS = {
     "contacts_properties":  "/properties/v1/contacts/properties",
-    "contacts_all":         "/contacts/v1/lists/all/contacts/all",
-    "contacts_recent":      "/contacts/v1/lists/recently_updated/contacts/recent",
+    "contacts_all":         "/contacts/v1/lists/all/contacts/all?count=100",
+    "contacts_recent":      "/contacts/v1/lists/recently_updated/contacts/recent?count=100",
     "contacts_detail":      "/contacts/v1/contact/vids/batch/",
 
     "companies_properties": "/companies/v2/properties",
-    "companies_all":        "/companies/v2/companies/paged",
-    "companies_recent":     "/companies/v2/companies/recent/modified",
+    "companies_all":        "/companies/v2/companies/paged?limit=250",
+    "companies_recent":     "/companies/v2/companies/recent/modified?count=100",
     "companies_detail":     "/companies/v2/companies/{company_id}",
     "contacts_by_company":  "/companies/v2/companies/{company_id}/vids",
 
     "deals_properties":     "/properties/v1/deals/properties",
-    "deals_all":            "/deals/v1/deal/paged",
-    "deals_recent":         "/deals/v1/deal/recent/modified",
+    "deals_all":            "/deals/v1/deal/paged?limit=250",
+    "deals_recent":         "/deals/v1/deal/recent/modified?limit=100",
     "deals_detail":         "/deals/v1/deal/{deal_id}",
 
     "deal_pipelines":       "/deals/v1/pipelines",
@@ -88,8 +90,8 @@ ENDPOINTS = {
 
     "subscription_changes": "/email/public/v1/subscriptions/timeline",
     "email_events":         "/email/public/v1/events",
-    "contact_lists":        "/contacts/v1/lists",
-    "forms":                "/forms/v2/forms",
+    "contact_lists":        "/contacts/v1/lists?count=250",
+    "forms":                "/forms/v2/forms?limit=250",
     "workflows":            "/automation/v3/workflows",
     "owners":               "/owners/v2/owners",
 }
@@ -381,13 +383,15 @@ def gen_request(STATE, tap_stream_id, url, params, path, more_key, offset_keys, 
         params.update(singer.get_offset(STATE, tap_stream_id))
 
     with metrics.record_counter(tap_stream_id) as counter:
-        while True:
+        pages_retrieved = 1
+        LOGGER.warn("Retrieving maximum {} page(s):".format(CONFIG['max_pages_retrieved']))
+        while True and pages_retrieved <= int(CONFIG['max_pages_retrieved']):
+            LOGGER.info("Retrieving page: {}".format(pages_retrieved))
             data = request(url, params).json()
-
             for row in data[path]:
                 counter.increment()
                 yield row
-
+            pages_retrieved +=1
             if not data.get(more_key, False):
                 break
 
@@ -641,14 +645,16 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, postg
                 'limit': 1000,
             }
             with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
-                while True:
+                pages_retrieved = 1
+                LOGGER.warn("Retrieving maximum {} page(s):".format(CONFIG['max_pages_retrieved']))
+                while True and pages_retrieved <= int(CONFIG['max_pages_retrieved']):
+                    LOGGER.info("Retrieving page: {}".format(pages_retrieved))
                     our_offset = singer.get_offset(STATE, entity_name)
                     if bool(our_offset) and our_offset.get('offset') != None:
                         params[StateFields.offset] = our_offset.get('offset')
 
                     data = request(url, params).json()
                     time_extracted = utils.now()
-
                     for row in data[path]:
                         counter.increment()
                         if postgres_compatible:
@@ -658,6 +664,7 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, postg
                                             record,
                                             catalog.get('stream_alias'),
                                             time_extracted=time_extracted)
+                    pages_retrieved += 1
                     if data.get('hasMore'):
                         STATE = singer.set_offset(STATE, entity_name, 'offset', data['offset'])
                         singer.write_state(STATE)
@@ -1013,6 +1020,9 @@ def main_impl():
          "refresh_token",
          "start_date"])
 
+    if not args.config.get('max_pages_retrieved'):
+        LOGGER.info("No value provided for max_pages_retrieved in the configuration file. Setting varible to default : {}".format(DEFAULT_MAX_PAGES_RETRIEVED))
+        args.config['max_pages_retrieved'] = DEFAULT_MAX_PAGES_RETRIEVED 
     CONFIG.update(args.config)
     STATE = {}
 
