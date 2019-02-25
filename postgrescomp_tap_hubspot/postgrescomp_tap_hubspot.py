@@ -645,10 +645,7 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, postg
                 'limit': 1000,
             }
             with Transformer(UNIX_MILLISECONDS_INTEGER_DATETIME_PARSING) as bumble_bee:
-                pages_retrieved = 1
-                LOGGER.warn("Retrieving maximum {} page(s):".format(CONFIG['max_pages_retrieved']))
-                while True and pages_retrieved <= int(CONFIG['max_pages_retrieved']):
-                    LOGGER.info("Retrieving page: {}".format(pages_retrieved))
+                while True:
                     our_offset = singer.get_offset(STATE, entity_name)
                     if bool(our_offset) and our_offset.get('offset') != None:
                         params[StateFields.offset] = our_offset.get('offset')
@@ -664,7 +661,6 @@ def sync_entity_chunked(STATE, catalog, entity_name, key_properties, path, postg
                                             record,
                                             catalog.get('stream_alias'),
                                             time_extracted=time_extracted)
-                    pages_retrieved += 1
                     if data.get('hasMore'):
                         STATE = singer.set_offset(STATE, entity_name, 'offset', data['offset'])
                         singer.write_state(STATE)
