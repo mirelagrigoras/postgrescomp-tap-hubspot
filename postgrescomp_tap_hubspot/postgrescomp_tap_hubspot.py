@@ -23,7 +23,6 @@ from singer import (transform,
 LOGGER = singer.get_logger()
 SESSION = requests.Session()
 
-DEFAULT_MAX_PAGES_RETRIEVED = 25
 class InvalidAuthException(Exception):
     pass
 
@@ -59,26 +58,25 @@ CONFIG = {
     "client_secret": None,
     "refresh_token": None,
     "start_date": None,
-    "hapikey": None,
-    "max_pages_retrieved": None
+    "hapikey": None
 }
 
 
 ENDPOINTS = {
     "contacts_properties":  "/properties/v1/contacts/properties",
-    "contacts_all":         "/contacts/v1/lists/all/contacts/all?count=100",
-    "contacts_recent":      "/contacts/v1/lists/recently_updated/contacts/recent?count=100",
+    "contacts_all":         "/contacts/v1/lists/all/contacts/all",
+    "contacts_recent":      "/contacts/v1/lists/recently_updated/contacts/recent",
     "contacts_detail":      "/contacts/v1/contact/vids/batch/",
 
     "companies_properties": "/companies/v2/properties",
-    "companies_all":        "/companies/v2/companies/paged?limit=250",
-    "companies_recent":     "/companies/v2/companies/recent/modified?count=100",
+    "companies_all":        "/companies/v2/companies/paged",
+    "companies_recent":     "/companies/v2/companies/recent/modified",
     "companies_detail":     "/companies/v2/companies/{company_id}",
     "contacts_by_company":  "/companies/v2/companies/{company_id}/vids",
 
     "deals_properties":     "/properties/v1/deals/properties",
-    "deals_all":            "/deals/v1/deal/paged?limit=250",
-    "deals_recent":         "/deals/v1/deal/recent/modified?limit=100",
+    "deals_all":            "/deals/v1/deal/paged",
+    "deals_recent":         "/deals/v1/deal/recent/modified",
     "deals_detail":         "/deals/v1/deal/{deal_id}",
 
     "deal_pipelines":       "/deals/v1/pipelines",
@@ -90,8 +88,8 @@ ENDPOINTS = {
 
     "subscription_changes": "/email/public/v1/subscriptions/timeline",
     "email_events":         "/email/public/v1/events",
-    "contact_lists":        "/contacts/v1/lists?count=250",
-    "forms":                "/forms/v2/forms?limit=250",
+    "contact_lists":        "/contacts/v1/lists",
+    "forms":                "/forms/v2/forms",
     "workflows":            "/automation/v3/workflows",
     "owners":               "/owners/v2/owners",
 }
@@ -384,8 +382,7 @@ def gen_request(STATE, tap_stream_id, url, params, path, more_key, offset_keys, 
 
     with metrics.record_counter(tap_stream_id) as counter:
         pages_retrieved = 1
-        LOGGER.warn("Retrieving maximum {} page(s):".format(CONFIG['max_pages_retrieved']))
-        while True and pages_retrieved <= int(CONFIG['max_pages_retrieved']):
+        while True:
             LOGGER.info("Retrieving page: {}".format(pages_retrieved))
             data = request(url, params).json()
             for row in data[path]:
@@ -1016,9 +1013,6 @@ def main_impl():
          "refresh_token",
          "start_date"])
 
-    if not args.config.get('max_pages_retrieved'):
-        LOGGER.info("No value provided for max_pages_retrieved in the configuration file. Setting varible to default : {}".format(DEFAULT_MAX_PAGES_RETRIEVED))
-        args.config['max_pages_retrieved'] = DEFAULT_MAX_PAGES_RETRIEVED 
     CONFIG.update(args.config)
     STATE = {}
 

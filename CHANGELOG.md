@@ -6,4 +6,8 @@
 
 1.0.1
 - **Fix:**
-  - Remove max_pages_retrieved in sync_entity_chunked
+  - Removed max_pages_retrieved in sync_entity_chunked.
+
+1.0.2:
+- **Fix:**
+  - Removed max_pages_retrieved since the replication_method for some streams is 'FULL_TABLE'. 
